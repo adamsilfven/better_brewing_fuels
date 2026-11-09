@@ -32,3 +32,15 @@ whether failure is during startup or brewing, `latest.log`, and reproduction
 steps. Avoid replacing an existing working pack's JAR until the new file is accepted.
 
 All three loader builds are author-accepted for Minecraft 1.21.1; continue to test future versions and broader deployment scenarios independently.
+
+## Minecraft 1.20.1 test candidates (not accepted)
+
+A separate Fabric + Forge source port is available under `ports/1.20.1/`.
+These **must not** be treated as part of the accepted Minecraft 1.21.1 stable release.
+
+- The Fabric build targets Minecraft 1.20.1 and Java 17; the initial CI build passed.
+- The Forge build targets Minecraft 1.20.1, Forge 47.4.28 and Java 17; its SRG remapping and refmap must pass CI before any candidate is distributed.
+- Neither 1.20.1 candidate has user-confirmed in-game acceptance.
+- Verify Charcoal = 4, Soul Sand = 8, Blaze Powder = 20, **including one-item stacks**; test fuel GUI, hoppers, save/reload, and a dedicated server.
+- Never replace a 1.21.1 JAR with a 1.20.1 JAR or install both loaders together.
+
