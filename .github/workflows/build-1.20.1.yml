@@ -1,0 +1,70 @@
+name: Build Minecraft 1.20.1 ports
+on:
+  workflow_dispatch:
+  push:
+    branches: ['main']
+    paths:
+      - 'ports/1.20.1/**'
+      - '.github/workflows/build-1.20.1.yml'
+  pull_request:
+    paths:
+      - 'ports/1.20.1/**'
+      - '.github/workflows/build-1.20.1.yml'
+
+jobs:
+  fabric:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.4'
+      - name: Build Fabric 1.20.1
+        run: gradle -p ports/1.20.1/fabric clean build --stacktrace
+      - name: Upload Fabric production JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: better-brewing-fuels-fabric-1.20.1-CANDIDATE
+          path: ports/1.20.1/fabric/build/libs/better-brewing-fuels-fabric-1.20.1-1.1.0.jar
+          if-no-files-found: error
+
+  forge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            17
+            21
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.0'
+      - name: Build Forge 1.20.1 with production SRG mappings
+        run: gradle -p ports/1.20.1/forge clean build --stacktrace
+      - name: Check production JAR and embedded Mixin refmap
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar=ports/1.20.1/forge/build/libs/better-brewing-fuels-forge-1.20.1-1.1.0-srg.jar
+          test -f "$jar"
+          unzip -t "$jar" >/dev/null
+          unzip -Z1 "$jar" | grep -Fxq 'META-INF/mods.toml'
+          unzip -Z1 "$jar" | grep -Fxq 'brewing_fuel_expansion.1201.mixins.json'
+          unzip -Z1 "$jar" | grep -Fxq 'brewing_fuel_expansion.1201.refmap.json'
+      - name: Upload Forge production JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: better-brewing-fuels-forge-1.20.1-CANDIDATE
+          path: ports/1.20.1/forge/build/libs/better-brewing-fuels-forge-1.20.1-1.1.0-srg.jar
+          if-no-files-found: error
