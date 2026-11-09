@@ -51,7 +51,8 @@ jobs:
         with:
           gradle-version: '9.3.0'
       - name: Build Forge 1.20.1 with production SRG mappings
-        run: gradle -p ports/1.20.1/forge clean build --stacktrace
+        # Forge Mixin annotation processing emits an essential refmap. Cached compileJava output can omit it.
+        run: gradle -p ports/1.20.1/forge clean build --stacktrace --no-build-cache --rerun-tasks
       - name: Verify Forge production JAR, pack.mcmeta and Mixin refmap
         shell: bash
         run: |
