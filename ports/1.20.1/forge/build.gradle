@@ -49,8 +49,6 @@ dependencies {
 sourceSets.main.java.srcDir('../../../shared/src/main/java')
 sourceSets.main.java.srcDir('../fabric/src/main/java')
 sourceSets.main.java.exclude 'com/adamsilfven/brewingfuel/mixin/**'
-sourceSets.main.resources.srcDir('../fabric/src/main/resources')
-sourceSets.main.resources.exclude 'fabric.mod.json'
 
 processResources {
     inputs.property 'version', project.version
