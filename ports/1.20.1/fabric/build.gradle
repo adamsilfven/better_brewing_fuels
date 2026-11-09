@@ -16,6 +16,8 @@ dependencies {
 
 sourceSets.main.java.srcDir('../../../shared/src/main/java')
 sourceSets.main.java.srcDir('src/main/java')
+// Do not compile the 1.21.1 Mixins in this 1.20.1 port.
+sourceSets.main.java.exclude 'com/adamsilfven/brewingfuel/mixin/**'
 
 processResources {
     inputs.property 'version', project.version
