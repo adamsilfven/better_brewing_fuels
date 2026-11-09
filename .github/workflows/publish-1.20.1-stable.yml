@@ -1,0 +1,124 @@
+name: Publish accepted Minecraft 1.20.1 stable release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-1.20.1-stable.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the exact accepted RC2 binaries and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          gh release download v1.1.0-mc1.20.1-rc2 \
+            -R "$REPO" \
+            -p better-brewing-fuels-fabric-1.20.1-1.1.0.jar \
+            -p better-brewing-fuels-forge-1.20.1-1.1.0.jar \
+            -p SHA256SUMS.txt \
+            -D release-assets
+          (
+            cd release-assets
+            sha256sum --check SHA256SUMS.txt
+          )
+          test "$(find release-assets -maxdepth 1 -name '*.jar' -type f | wc -l)" -eq 2
+
+      - name: Verify both JARs without modifying them
+        shell: bash
+        run: |
+          set -euo pipefail
+          fabric=release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar
+          forge=release-assets/better-brewing-fuels-forge-1.20.1-1.1.0.jar
+          unzip -t "$fabric" >/dev/null
+          unzip -t "$forge" >/dev/null
+          python3 tools/verify_forge1201_jar.py "$forge"
+          python3 - "$fabric" <<'PY'
+          import json, sys, zipfile
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              meta=json.loads(z.read("fabric.mod.json"))
+              assert meta["id"]=="brewing_fuel_expansion"
+              assert meta["depends"]["minecraft"]=="1.20.1"
+              assert "brewing_fuel_expansion.1201.mixins.json" in z.namelist()
+              assert "com/adamsilfven/brewingfuel/Fuels.class" in z.namelist()
+          print("PASS: Fabric 1.20.1 metadata and fuel logic")
+          PY
+          (cd release-assets && sha256sum --check SHA256SUMS.txt)
+
+      - name: Prepare stable release notes
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## Better Brewing Fuels 1.1.0 for Minecraft 1.20.1
+
+          **Stable: Minecraft 1.20.1 | Fabric + Forge | Java 17**
+
+          Both loader versions passed GitHub Actions compilation and **were reported working in-game by the mod author on November 9, 2026**. Forge RC2 fixes the prior missing `pack.mcmeta` startup warning; its corrected candidate passed author testing.
+
+          These are the **exact same accepted JARs as 1.20.1 RC2**, republished unmodified with SHA-256 checksums.
+
+          ### Download one JAR for your loader
+          - Fabric: `better-brewing-fuels-fabric-1.20.1-1.1.0.jar`
+          - Forge: `better-brewing-fuels-forge-1.20.1-1.1.0.jar`
+
+          Do **not** install both loader variants or use these 1.20.1 JARs on Minecraft 1.21.1. The independent 1.21.1 stable release remains unchanged.
+
+          ### Brewing fuels
+          - Charcoal: 4 operations
+          - Soul Sand: 8 operations
+          - Blaze Powder: 20 operations (unchanged from vanilla)
+
+          Gameplay acceptance is author-reported; dedicated-server and broad modpack compatibility testing are not independently documented.
+          See [testing and regression checklist](https://github.com/adamsilfven/better_brewing_fuels/blob/main/TESTING.md) for details.
+          EOF
+
+      - name: Create stable release without touching RC2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.0-mc1.20.1 -R "$REPO" >/dev/null 2>&1; then
+            echo "::error::Stable release already exists. Refusing to overwrite release assets."
+            exit 1
+          fi
+          gh release create v1.1.0-mc1.20.1 \
+            release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar \
+            release-assets/better-brewing-fuels-forge-1.20.1-1.1.0.jar \
+            release-assets/SHA256SUMS.txt \
+            -R "$REPO" \
+            --target "$GITHUB_SHA" \
+            --title 'Better Brewing Fuels v1.1.0 for Minecraft 1.20.1' \
+            --notes-file release-notes.md \
+            --latest=false
+
+      - name: Verify public stable release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/releases/tags/v1.1.0-mc1.20.1" > published.json
+          test "$(jq -r '.draft' published.json)" = false
+          test "$(jq -r '.prerelease' published.json)" = false
+          test "$(jq '.assets | length' published.json)" -eq 3
+          for name in \
+            better-brewing-fuels-fabric-1.20.1-1.1.0.jar \
+            better-brewing-fuels-forge-1.20.1-1.1.0.jar \
+            SHA256SUMS.txt; do
+            jq -e --arg name "$name" '.assets[] | select(.name == $name and .size > 0 and .state == "uploaded")' published.json >/dev/null
+          done
+          jq '{url: .html_url, prerelease, assets: [.assets[].name]}' published.json
