@@ -60,6 +60,8 @@ jobs:
           test -f "$jar"
           unzip -t "$jar" >/dev/null
           unzip -Z1 "$jar" | grep -Fxq 'META-INF/mods.toml'
+          unzip -Z1 "$jar" | grep -Fxq 'pack.mcmeta'
+          python3 -c 'import json,sys,zipfile; p=json.loads(zipfile.ZipFile(sys.argv[1]).read("pack.mcmeta"))["pack"]; assert p["pack_format"] == 15 and isinstance(p["description"], str) and p["description"].strip()' "$jar"
           unzip -Z1 "$jar" | grep -Fxq 'brewing_fuel_expansion.1201.mixins.json'
           unzip -Z1 "$jar" | grep -Fxq 'brewing_fuel_expansion.1201.refmap.json'
       - name: Upload Forge production JAR
