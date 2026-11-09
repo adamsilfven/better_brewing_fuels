@@ -2,7 +2,8 @@
 
 ## Findings
 
-1. The fuel math and intent are portable; Minecraft internals are not.
+1. Forge 1.21.1 also exists (52.1.x) and has a dedicated ForgeGradle 7 project; the initial build is under verification. A Forge 1.21.1 artifact should not be released until the CI build and game testing pass.
+2. The fuel math and intent are portable; Minecraft internals are not.
    The game uses obfuscated/intermediary mappings through 1.21.11 for Fabric,
    while 26.1+ runs with Mojang's unobfuscated names. The 26.x releases
    require Java 25, whereas 1.21.x needs Java 21.
@@ -20,7 +21,7 @@
 
 | Wave | Minecraft versions | Loader targets | Key work |
 | --- | --- | --- | --- |
-| 1 | 1.21.1 | Fabric, NeoForge | Finish CI, mappings and full game tests |
+| 1 | 1.21.1 | Fabric, NeoForge, Forge | Keep existing builds working; verify Forge CI, then test all three in game |
 | 2 | 1.20.1 | Fabric, Forge | Java 17, API/mapping adjustments, test mixins |
 | 3 | 1.21.4 / 1.21.5 / 1.21.8 / 1.21.11 | Fabric, NeoForge where supported | Group versions by verified method signatures, not advertised ranges |
 | 4 | 26.1.2 / 26.2 / 26.3 | Fabric, NeoForge | Java 25, 26.x toolchain and APIs |
