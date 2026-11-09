@@ -33,14 +33,15 @@ steps. Avoid replacing an existing working pack's JAR until the new file is acce
 
 All three loader builds are author-accepted for Minecraft 1.21.1; continue to test future versions and broader deployment scenarios independently.
 
-## Minecraft 1.20.1 test candidates (not accepted)
+## Minecraft 1.20.1 acceptance and Forge RC2 regression testing
 
 A separate Fabric + Forge source port is available under `ports/1.20.1/`.
 These **must not** be treated as part of the accepted Minecraft 1.21.1 stable release.
 
-- The Fabric build targets Minecraft 1.20.1 and Java 17; the initial CI build passed.
-- The Forge build targets Minecraft 1.20.1, Forge 47.4.28 and Java 17; its SRG remapping and refmap must pass CI before any candidate is distributed.
-- Neither 1.20.1 candidate has user-confirmed in-game acceptance.
-- Verify Charcoal = 4, Soul Sand = 8, Blaze Powder = 20, **including one-item stacks**; test fuel GUI, hoppers, save/reload, and a dedicated server.
+- **Fabric 1.20.1 PASS (author-reported):** Minecraft loaded and mod worked. The accepted RC1 Fabric binary was carried into RC2 byte-for-byte.
+- **Forge 1.20.1 RC1 FAILED:** author reported the `failed to load a valid ResourcePackInfo` warning at startup. Inspection confirmed the `pack.mcmeta` file was absent. Do not use RC1 Forge.
+- **Forge 1.20.1 RC2 TEST PENDING:** `pack.mcmeta` (pack format 15) was added; fresh compilation and CI archive checks now pass, including the required SRG Mixin reference map. The Java classes and Mixin data were byte-for-byte identical between the original and corrected Forge JARs.
+- Download [the corrected 1.20.1 RC2 prerelease](https://github.com/adamsilfven/better_brewing_fuels/releases/tag/v1.1.0-mc1.20.1-rc2). Only the **Forge RC2** JAR needs new in-game acceptance.
+- **Forge RC2 retest:** Delete the old Forge RC1 JAR and insert RC2 only in the Forge 1.20.1 profile. Confirm Minecraft reaches the main menu and world with no ResourcePackInfo or Mixin errors. Verify Charcoal = 4, Soul Sand = 8, Blaze Powder = 20, **including one-item stacks**. Then test fuel GUI, hoppers, save/reload, and a dedicated server when possible.
 - Never replace a 1.21.1 JAR with a 1.20.1 JAR or install both loaders together.
 
