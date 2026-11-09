@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'net.minecraftforge.gradle' version '7.0.40'
-    id 'net.minecraftforge.renamer' version '1.1.8'
 }
 
 version = project.mod_version
@@ -10,15 +9,6 @@ base { archivesName = "better-brewing-fuels-forge-${project.minecraft_version}" 
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-renamer.enableMixinRefmaps {
-    config 'brewing_fuel_expansion.forge.mixins.json'
-    refMap = 'brewing_fuel_expansion.refmap.json'
-}
-
-renamer.classes(tasks.named('jar', Jar)) {
-    archiveClassifier = 'srg'
-    mappings renamer.mixin.generatedMappings
-}
 
 minecraft {
     mappings channel: 'official', version: project.minecraft_version
@@ -47,10 +37,7 @@ repositories {
 
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}")
-    annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
 }
-
-renamer.mappings(minecraft.dependency.toSrg)
 
 sourceSets.main.java.srcDir('../shared/src/main/java')
 sourceSets.main.resources.srcDir('../shared/src/main/resources')
