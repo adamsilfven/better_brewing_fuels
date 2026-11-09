@@ -7,7 +7,7 @@ The Fabric and NeoForge GitHub Actions compilation jobs passed in [run #2](https
 1. Create a clean Minecraft **1.21.1 Fabric** profile with Fabric Loader; put ONLY `better-brewing-fuels-fabric-1.21.1-1.1.0.jar` in its mods folder.
 2. Create a separate clean Minecraft **1.21.1 NeoForge 21.1.259+** profile; put ONLY `better-brewing-fuels-neoforge-1.21.1-1.1.0.jar` in its mods folder. Don't install both JARs together.
 3. Create a separate clean Minecraft **1.21.1 Forge 52.1.21** profile with ONLY the Forge 1.21.1 JAR. Never combine loader JARs.
-5. Verify the game reaches the main menu and a world loads with no Mixin errors.
+4. Verify the game reaches the main menu and a world loads with no Mixin errors.
 5. With a brewing stand and potion ingredients, insert **one Charcoal** in the fuel slot. Check it gives **4** charges; one full brewing cycle consumes one charge.
 6. Repeat with **one Soul Sand**. Check it gives **8** charges. Soul Soil should **not** count.
 7. Confirm **Blaze Powder** still provides **20** charges.
@@ -18,9 +18,10 @@ The Fabric and NeoForge GitHub Actions compilation jobs passed in [run #2](https
 
 ## How to download JARs
 
-From the [successful GitHub Actions run](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383), choose the matching artifact:
+From the [Fabric and NeoForge build](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383) or the [Forge build](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42697205223), choose the matching artifact:
 - `better-brewing-fuels-fabric-1.21.1`
 - `better-brewing-fuels-neoforge-1.21.1`
+- `better-brewing-fuels-forge-1.21.1`
 
 Download and unzip each artifact, then use the lone JAR inside.
 
