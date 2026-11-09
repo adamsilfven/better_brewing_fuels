@@ -1,14 +1,15 @@
 # Minecraft version expansion plan (November 9, 2026)
 
-## Confirmed release
+## Stable releases (author-confirmed gameplay acceptance)
 
-**Minecraft 1.21.1**: Fabric, NeoForge and Forge builds have passed GitHub Actions compilation, and the mod author reports all three passed in-game testing. These files remain available unchanged in [stable v1.1.0](https://github.com/adamsilfven/better_brewing_fuels/releases/tag/v1.1.0).
+- **Minecraft 1.21.1:** Fabric, NeoForge and Forge builds passed GitHub Actions compilation and author-reported in-game testing. Binaries preserved in [stable v1.1.0](https://github.com/adamsilfven/better_brewing_fuels/releases/tag/v1.1.0).
+- **Minecraft 1.20.1:** Fabric and corrected Forge RC2 passed GitHub Actions compilation and author-reported in-game testing on November 9, 2026. Exact accepted binaries are in [stable v1.1.0-mc1.20.1](https://github.com/adamsilfven/better_brewing_fuels/releases/tag/v1.1.0-mc1.20.1).
 
 ## Additional versions
 
 | Target | Loaders | Java | Status / technical considerations |
 | --- | --- | --- | --- |
-| 1.20.1 | Fabric + Forge | 17 | In progress under `ports/1.20.1/`; needs loader-specific remapping and in-game acceptance |
+| 1.20.1 | Fabric + Forge | 17 | Stable, author-confirmed in-game PASS; SRG/refmap and `pack.mcmeta` fixed for Forge |
 | 26.3 | Fabric + NeoForge + Forge where supported | 25 | Research complete; new `brewing_fuel` item component permits avoiding the historical Mixins |
 | 1.21.4, 1.21.5, 1.21.8, 1.21.11 | Fabric, NeoForge, Forge where supported | 21 | Compile and validate separate class/API families; don't infer cross-patch compatibility |
 | 26.2, 26.1.2 | Supported mod loaders | 25 | Check each version's brewing fuel implementation and loader API |
