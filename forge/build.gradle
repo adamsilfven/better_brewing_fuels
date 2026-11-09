@@ -40,7 +40,6 @@ dependencies {
 }
 
 sourceSets.main.java.srcDir('../shared/src/main/java')
-sourceSets.main.resources.srcDir('../shared/src/main/resources')
 
 processResources {
     inputs.property 'version', project.version
@@ -55,6 +54,8 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('jar', Jar) {
+    // The shared Mixin classes serve Fabric and NeoForge; Forge uses its dedicated Mojmap hooks.
+    exclude 'com/adamsilfven/brewingfuel/mixin/**'
     manifest {
         attributes 'MixinConfigs': 'brewing_fuel_expansion.forge.mixins.json'
     }
