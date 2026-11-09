@@ -11,7 +11,7 @@ the JAR's `MixinConfigs` manifest attribute.
 ## Build
 
 Run the [Build Forge 1.21.1](../.github/workflows/build-forge-1.21.1.yml)
-GitHub Actions workflow or use Java 21 and Gradle 8.14.4:
+GitHub Actions workflow or use Java 21 and Gradle 9.3.0:
 
 ```sh
 gradle -p forge clean build
