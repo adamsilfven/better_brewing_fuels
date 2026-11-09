@@ -11,7 +11,7 @@ base { archivesName = "better-brewing-fuels-forge-${project.minecraft_version}" 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 renamer.enableMixinRefmaps {
-    config 'brewing_fuel_expansion.mixins.json'
+    config 'brewing_fuel_expansion.forge.mixins.json'
     refMap = 'brewing_fuel_expansion.refmap.json'
 }
 
@@ -25,7 +25,7 @@ minecraft {
     runs {
         configureEach {
             workingDir.convention(layout.projectDirectory.dir('run'))
-            args '--mixin.config=brewing_fuel_expansion.mixins.json'
+            args '--mixin.config=brewing_fuel_expansion.forge.mixins.json'
         }
         register('client')
         register('server') {
@@ -69,6 +69,6 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('jar', Jar) {
     manifest {
-        attributes 'MixinConfigs': 'brewing_fuel_expansion.mixins.json'
+        attributes 'MixinConfigs': 'brewing_fuel_expansion.forge.mixins.json'
     }
 }
