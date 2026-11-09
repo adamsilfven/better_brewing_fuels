@@ -1,0 +1,126 @@
+name: Publish corrected Minecraft 1.20.1 RC2
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-1.20.1-rc2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve unchanged Fabric release and corrected Forge build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets corrected-forge prior-checks
+          gh release download v1.1.0-mc1.20.1-rc1 -R "$REPO" \
+            -p better-brewing-fuels-fabric-1.20.1-1.1.0.jar -D release-assets
+          gh release download v1.1.0-mc1.20.1-rc1 -R "$REPO" \
+            -p SHA256SUMS.txt -D prior-checks
+          gh run download 42704824041 -R "$REPO" \
+            -n better-brewing-fuels-forge-1.20.1-CANDIDATE -D corrected-forge
+          test -s release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar
+          # Ensure the Fabric binary is identical to the already user-tested RC1.
+          fabric_sha="$(sha256sum release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar | cut -d ' ' -f 1)"
+          published_sha="$(grep -F 'better-brewing-fuels-fabric-1.20.1-1.1.0.jar' prior-checks/SHA256SUMS.txt | cut -d ' ' -f 1)"
+          test "$fabric_sha" = "$published_sha"
+          forge=corrected-forge/better-brewing-fuels-forge-1.20.1-1.1.0-srg.jar
+          python3 tools/verify_forge1201_jar.py "$forge"
+          # Filename-only normalization: the -srg file is the Forge production JAR.
+          cp "$forge" release-assets/better-brewing-fuels-forge-1.20.1-1.1.0.jar
+          (cd release-assets && sha256sum *.jar > SHA256SUMS.txt)
+          ls -lh release-assets
+      - name: Prepare release notes
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## Better Brewing Fuels 1.20.1 | RC2 packaging fix
+
+          **Minecraft 1.20.1 | Java 17 | Fabric and Forge**
+
+          - **Fabric:** same byte-for-byte JAR as RC1. Author confirmed it works in-game.
+          - **Forge:** corrected release candidate. Added the missing root `pack.mcmeta`
+            (Minecraft resource pack format 15), resolving the metadata issue that
+            caused the *failed to load a valid ResourcePackInfo* warning.
+          - The corrected Forge JAR retains **identical compiled classes and Mixin
+            mappings** compared with RC1. Its fresh build passed archive, metadata,
+            Mixin refmap, and Java 17 verification.
+          - **Forge gameplay testing is still required.** This release remains a prerelease.
+
+          ### Downloads
+          Choose exactly one for the matching Minecraft 1.20.1 loader:
+          - Fabric: `better-brewing-fuels-fabric-1.20.1-1.1.0.jar`
+          - Forge: `better-brewing-fuels-forge-1.20.1-1.1.0.jar`
+
+          Replace the previous RC1 Forge JAR; do not leave both in the mods folder.
+          Expected operations: Charcoal 4, Soul Sand 8, Blaze Powder 20.
+          Please verify Forge startup and fuel values in a clean 1.20.1 Forge 47.4.28 profile.
+
+          `SHA256SUMS.txt` lists checksums for the exact JARs attached here.
+          The existing stable Minecraft 1.21.1 release has not been changed.
+          EOF
+      - name: Publish separate RC2 prerelease with direct JARs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.0-mc1.20.1-rc2 -R "$REPO" >/dev/null 2>&1; then
+            echo "::error::RC2 release exists; refusing to replace files"
+            exit 1
+          fi
+          gh release create v1.1.0-mc1.20.1-rc2 \
+            release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar \
+            release-assets/better-brewing-fuels-forge-1.20.1-1.1.0.jar \
+            release-assets/SHA256SUMS.txt \
+            -R "$REPO" --target "$GITHUB_SHA" \
+            --title 'Better Brewing Fuels 1.20.1 (Fabric accepted, Forge RC2)' \
+            --notes-file release-notes.md --prerelease
+          test "$(gh release view v1.1.0-mc1.20.1-rc2 -R "$REPO" --json assets --jq '.assets | length')" -eq 3
+          test "$(gh release view v1.1.0-mc1.20.1-rc2 -R "$REPO" --json isPrerelease --jq '.isPrerelease')" = true
+      - name: Mark older RC1 as superseded (without removing its files)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/releases/tags/v1.1.0-mc1.20.1-rc1" > prior-release.json
+          cat > old-notes.md <<'EOF'
+          ## SUPERSEDED: Please use RC2 instead
+
+          The **Forge** JAR in this RC1 is missing `pack.mcmeta` and causes
+          `failed to load a valid ResourcePackInfo` on Minecraft Forge 1.20.1.
+          **Do not install the Forge file from this release.** Download the
+          corrected test candidate from
+          [1.20.1 RC2](https://github.com/adamsilfven/better_brewing_fuels/releases/tag/v1.1.0-mc1.20.1-rc2).
+
+          The Fabric RC1 JAR worked in-game and is unchanged in RC2.
+
+          ---
+
+          EOF
+          jq -r '.body // ""' prior-release.json >> old-notes.md
+          id="$(jq -r '.id' prior-release.json)"
+          gh api -X PATCH "repos/$REPO/releases/$id" \
+            -f name='SUPERSEDED - Better Brewing Fuels 1.20.1 RC1' \
+            -F body=@old-notes.md >/dev/null
+      - name: Verify new public release and asset metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          gh release view v1.1.0-mc1.20.1-rc2 -R "$REPO" --json url,isPrerelease,assets \
+            --jq '{url: .url, isPrerelease: .isPrerelease, assets: [.assets[].name]}'
