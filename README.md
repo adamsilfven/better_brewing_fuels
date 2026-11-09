@@ -17,8 +17,8 @@ they compile successfully and pass in-game testing.
 | Target | Status |
 | --- | --- |
 | NeoForge 1.21.1, original 1.0 | Original supplied separately; preserved |
-| NeoForge 1.21.1, source 1.1.0 | Build/test pending |
-| Fabric 1.21.1, source 1.1.0 | Build/test pending |
+| NeoForge 1.21.1, source 1.1.0 | GitHub Actions build passed; game tests pending |
+| Fabric 1.21.1, source 1.1.0 | GitHub Actions build passed; game tests pending |
 | Other Minecraft versions | Under investigation; see [VERSION_EXPANSION.md](VERSION_EXPANSION.md) |
 
 ## Project layout
@@ -30,6 +30,8 @@ they compile successfully and pass in-game testing.
 - `.github/workflows/build-1.21.1.yml`: CI build recipe for each loader
 
 ## Build
+
+Both 1.21.1 loaders compiled successfully in [GitHub Actions run #2](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383). These are **test candidates**, not game-verified releases. See [TESTING.md](TESTING.md).
 
 Use GitHub **Actions**, workflow **Build both 1.21.1 loaders**. A successful run
 uploads the distributable JARs as separate artifacts. Or on a Java 21 machine
