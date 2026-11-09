@@ -19,6 +19,7 @@ they compile successfully and pass in-game testing.
 | NeoForge 1.21.1, original 1.0 | Original supplied separately; preserved |
 | NeoForge 1.21.1, source 1.1.0 | GitHub Actions build passed; game tests pending |
 | Fabric 1.21.1, source 1.1.0 | GitHub Actions build passed; game tests pending |
+| Forge 1.21.1, source 1.1.0 | Automated Forge build configured; verification pending |
 | Other Minecraft versions | Under investigation; see [VERSION_EXPANSION.md](VERSION_EXPANSION.md) |
 
 ## Project layout
@@ -26,10 +27,13 @@ they compile successfully and pass in-game testing.
 - `shared/`: fuel rules and Minecraft Mixins shared by both loaders
 - `fabric/`: Fabric Loom 1.21.1 project
 - `neoforge/`: NeoForge ModDevGradle 1.21.1 project
+- `forge/`: ForgeGradle 7 1.21.1 project (build verification in progress)
 - `tools/smoke_test.py`: limited Java compilation and fuel-rule tests using stubs
 - `.github/workflows/build-1.21.1.yml`: CI build recipe for each loader
 
 ## Build
+
+Forge is built separately by the [Forge 1.21.1 workflow](.github/workflows/build-forge-1.21.1.yml) using Gradle 9.3.0; its successful compilation has not yet been confirmed.
 
 Both 1.21.1 loaders compiled successfully in [GitHub Actions run #2](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383). These are **test candidates**, not game-verified releases. See [TESTING.md](TESTING.md).
 
