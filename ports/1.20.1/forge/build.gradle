@@ -34,8 +34,6 @@ renamer.enableMixinRefmaps {
     refMap = 'brewing_fuel_expansion.1201.refmap.json'
 }
 
-renamer.mappings(minecraft.dependency.toSrg)
-
 renamer.classes(tasks.named('jar', Jar)) {
     archiveClassifier = 'srg'
     mappings renamer.mixin.generatedMappings
@@ -45,6 +43,8 @@ dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}")
     annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
 }
+
+renamer.mappings(minecraft.dependency.toSrg)
 
 sourceSets.main.java.srcDir('../../../shared/src/main/java')
 sourceSets.main.java.srcDir('../fabric/src/main/java')
