@@ -3,7 +3,7 @@
 A lightweight Minecraft mod for brewing stands.
 
 - **Charcoal:** 4 brewing operations per item.
-- **Soul Sand:** 8 brewing operations per item (not Soul Soil).
+- **Soul Sand:** 8 brewing operations per item.
 - **Blaze Powder:** unchanged at its vanilla 20 operations.
 - Supports the brewing stand fuel slot and hopper insertion.
 
