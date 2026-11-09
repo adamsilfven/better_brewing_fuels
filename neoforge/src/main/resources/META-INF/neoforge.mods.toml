@@ -1,0 +1,21 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+[[mods]]
+modId="brewing_fuel_expansion"
+version="${version}"
+displayName="Better Brewing Fuels"
+authors="Adam Silfven"
+description="Charcoal powers 4 brewing operations, Soul Sand powers 8; Blaze Powder remains unchanged."
+[[dependencies.brewing_fuel_expansion]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+side="BOTH"
+[[dependencies.brewing_fuel_expansion]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.259,21.2)"
+side="BOTH"
+[[mixins]]
+config="brewing_fuel_expansion.mixins.json"
