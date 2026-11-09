@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "brewing_fuel_expansion",
+  "version": "${version}",
+  "name": "Better Brewing Fuels",
+  "description": "Charcoal fuels 4 brewing operations; Soul Sand fuels 8; Blaze Powder stays vanilla.",
+  "authors": ["Adam Silfven"],
+  "license": "MIT",
+  "environment": "*",
+  "mixins": ["brewing_fuel_expansion.1201.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "1.20.1",
+    "java": ">=17"
+  }
+}
