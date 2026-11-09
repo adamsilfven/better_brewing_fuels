@@ -1,0 +1,33 @@
+plugins {
+    id 'fabric-loom' version '1.11'
+}
+
+version = project.mod_version
+group = project.maven_group
+base { archivesName = "better-brewing-fuels-fabric-${project.minecraft_version}" }
+
+repositories { mavenCentral() }
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
+
+sourceSets.main.java.srcDir('../shared/src/main/java')
+sourceSets.main.resources.srcDir('../shared/src/main/resources')
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
