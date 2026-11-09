@@ -1,0 +1,127 @@
+name: Publish v1.1.0 release assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v1.1.0.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+
+      - name: Download previously verified build artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/{fabric,neoforge,forge}
+          gh run download 42687956383 -R "$REPO" -n better-brewing-fuels-fabric-1.21.1 -D .artifacts/fabric
+          gh run download 42687956383 -R "$REPO" -n better-brewing-fuels-neoforge-1.21.1 -D .artifacts/neoforge
+          gh run download 42697496779 -R "$REPO" -n better-brewing-fuels-forge-1.21.1 -D .artifacts/forge
+
+      - name: Verify and stage exact loader-specific production JARs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          for loader in fabric neoforge forge; do
+            expected="better-brewing-fuels-${loader}-1.21.1-1.1.0.jar"
+            src=".artifacts/${loader}/${expected}"
+            if [[ ! -f "$src" ]]; then
+              echo "::error::Missing expected production JAR: $src"
+              find ".artifacts/${loader}" -maxdepth 3 -type f -print || true
+              exit 1
+            fi
+            if [[ $(find ".artifacts/${loader}" -type f -name '*.jar' | wc -l) -ne 1 ]]; then
+              echo "::error::Unexpected extra JARs in ${loader} artifact"
+              exit 1
+            fi
+            test "$(stat -c%s "$src")" -gt 1000
+            unzip -t "$src" >/dev/null
+            case "$loader" in
+              fabric)
+                unzip -Z1 "$src" | grep -Fxq 'fabric.mod.json'
+                unzip -Z1 "$src" | grep -Fxq 'brewing_fuel_expansion.mixins.json'
+                ;;
+              neoforge)
+                unzip -Z1 "$src" | grep -Fxq 'META-INF/neoforge.mods.toml'
+                unzip -Z1 "$src" | grep -Fxq 'brewing_fuel_expansion.mixins.json'
+                ;;
+              forge)
+                unzip -Z1 "$src" | grep -Fxq 'META-INF/mods.toml'
+                unzip -Z1 "$src" | grep -Fxq 'brewing_fuel_expansion.forge.mixins.json'
+                ;;
+            esac
+            unzip -Z1 "$src" | grep -Fxq 'com/adamsilfven/brewingfuel/Fuels.class'
+            cp "$src" "release-assets/$expected"
+          done
+          (cd release-assets && sha256sum *.jar > SHA256SUMS.txt)
+          ls -l release-assets/
+          cat release-assets/SHA256SUMS.txt
+
+      - name: Write release description
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## Better Brewing Fuels v1.1.0 (Minecraft 1.21.1)
+
+          **Automated compilation passed for Fabric, NeoForge and Forge.**
+          These are **test candidates**, not yet verified in-game. This release is intentionally marked prerelease.
+
+          Download the single `.jar` that matches your mod loader:
+          - Fabric: `better-brewing-fuels-fabric-1.21.1-1.1.0.jar`
+          - NeoForge: `better-brewing-fuels-neoforge-1.21.1-1.1.0.jar`
+          - Forge: `better-brewing-fuels-forge-1.21.1-1.1.0.jar`
+
+          **Do not combine loader JARs** or install one alongside the original mod.
+          Requires Minecraft **1.21.1** and **Java 21**.
+
+          Expected: Charcoal fuels 4 brewing operations; Soul Sand fuels 8; Blaze Powder still fuels 20. Test GUI placement, hopper insertion, persistence and multiplayer before production use.
+
+          `SHA256SUMS.txt` contains checksums of all three files.
+          See [the test checklist](https://github.com/adamsilfven/better_brewing_fuels/blob/main/TESTING.md).
+          EOF
+
+      - name: Create prerelease with direct JAR attachments
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.0 -R "$REPO" >/dev/null 2>&1; then
+            echo "::error::Release v1.1.0 already exists. Refusing to overwrite its assets."
+            exit 1
+          fi
+          gh release create v1.1.0 \
+            release-assets/better-brewing-fuels-fabric-1.21.1-1.1.0.jar \
+            release-assets/better-brewing-fuels-neoforge-1.21.1-1.1.0.jar \
+            release-assets/better-brewing-fuels-forge-1.21.1-1.1.0.jar \
+            release-assets/SHA256SUMS.txt \
+            -R "$REPO" \
+            --target "$GITHUB_SHA" \
+            --title 'Better Brewing Fuels v1.1.0 (test candidates)' \
+            --notes-file release-notes.md \
+            --prerelease
+
+      - name: Verify release asset listing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view v1.1.0 -R "$REPO" --json url,isPrerelease,assets \
+            --jq '{url: .url, isPrerelease: .isPrerelease, assets: [.assets[].name]}'
+          test "$(gh release view v1.1.0 -R "$REPO" --json assets --jq '.assets | length')" -eq 4
