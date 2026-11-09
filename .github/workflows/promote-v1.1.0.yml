@@ -1,0 +1,78 @@
+name: Promote verified v1.1.0 release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/promote-v1.1.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify expected release assets, update release status and notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/releases/tags/v1.1.0" > release.json
+
+          for asset in \
+            better-brewing-fuels-fabric-1.21.1-1.1.0.jar \
+            better-brewing-fuels-neoforge-1.21.1-1.1.0.jar \
+            better-brewing-fuels-forge-1.21.1-1.1.0.jar \
+            SHA256SUMS.txt; do
+            jq -e --arg name "$asset" '.assets[] | select(.name == $name and .size > 0 and .state == "uploaded")' release.json >/dev/null || {
+              echo "::error::Missing or invalid release asset: $asset"
+              exit 1
+            }
+          done
+          test "$(jq '.assets | length' release.json)" -eq 4
+
+          cat > release-notes.md <<'EOF'
+          ## Better Brewing Fuels v1.1.0
+          
+          **Minecraft 1.21.1 | Fabric, NeoForge and Forge | Java 21**
+          
+          All three loader-specific builds compiled successfully in GitHub Actions.
+          **The mod author confirmed on November 9, 2026 that all three passed in-game testing.**
+          The three existing JARs are unchanged from the previously published prerelease.
+          This is author-reported gameplay acceptance, not independently documented
+          dedicated-server or broad modpack compatibility testing.
+          
+          ### Download and install
+          Pick **one** JAR for your loader; do not install multiple loader variants:
+          
+          - Fabric: `better-brewing-fuels-fabric-1.21.1-1.1.0.jar`
+          - NeoForge: `better-brewing-fuels-neoforge-1.21.1-1.1.0.jar`
+          - Forge: `better-brewing-fuels-forge-1.21.1-1.1.0.jar`
+          
+          These are direct assets, not ZIP archives. The `SHA256SUMS.txt` file provides checksums.
+          
+          ### Features
+          - Charcoal: **4** brewing operations
+          - Soul Sand: **8** brewing operations
+          - Blaze Powder: vanilla **20** brewing operations, unchanged
+          - Compatible with the brewing stand fuel slot and automation
+          
+          See [testing and regression checklist](https://github.com/adamsilfven/better_brewing_fuels/blob/main/TESTING.md).
+          EOF
+
+          release_id="$(jq -r '.id' release.json)"
+          gh api -X PATCH "repos/$REPO/releases/$release_id" \
+            -F prerelease=false \
+            -f name='Better Brewing Fuels v1.1.0' \
+            -F body=@release-notes.md \
+            --jq '{tag: .tag_name, prerelease: .prerelease, name: .name, url: .html_url, assets: [.assets[].name]}'
+
+          gh api "repos/$REPO/releases/tags/v1.1.0" > verified.json
+          test "$(jq -r '.prerelease' verified.json)" = 'false'
+          test "$(jq '.assets | length' verified.json)" -eq 4
+          test "$(jq -r '.name' verified.json)" = 'Better Brewing Fuels v1.1.0'
+          echo "Release promoted and all four original assets retained."
