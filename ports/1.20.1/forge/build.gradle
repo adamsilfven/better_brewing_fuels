@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '7.0.40'
+    id 'net.minecraftforge.renamer' version '1.1.8'
+}
+
+version = project.mod_version
+group = project.maven_group
+base { archivesName = "better-brewing-fuels-forge-${project.minecraft_version}" }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: project.minecraft_version
+    runs {
+        configureEach {
+            workingDir.convention(layout.projectDirectory.dir('run'))
+            args '--mixin.config=brewing_fuel_expansion.1201.mixins.json'
+        }
+        register('client') { }
+        register('server') { args '--nogui' }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+renamer.enableMixinRefmaps {
+    config 'brewing_fuel_expansion.1201.mixins.json'
+    refMap = 'brewing_fuel_expansion.1201.refmap.json'
+}
+
+renamer.mappings(minecraft.dependency.toSrg)
+
+renamer.classes(tasks.named('jar', Jar)) {
+    archiveClassifier = 'srg'
+    mappings renamer.mixin.generatedMappings
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}")
+    annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
+}
+
+sourceSets.main.java.srcDir('../../../shared/src/main/java')
+sourceSets.main.java.srcDir('../fabric/src/main/java')
+sourceSets.main.java.exclude 'com/adamsilfven/brewingfuel/mixin/**'
+sourceSets.main.resources.srcDir('../fabric/src/main/resources')
+sourceSets.main.resources.exclude 'fabric.mod.json'
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') { expand 'version': project.version }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.named('jar', Jar) {
+    manifest { attributes 'MixinConfigs': 'brewing_fuel_expansion.1201.mixins.json' }
+}
