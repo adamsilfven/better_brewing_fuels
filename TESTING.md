@@ -1,8 +1,8 @@
 # Better Brewing Fuels 1.1.0: 1.21.1 Acceptance Checklist
 
-The Fabric and NeoForge GitHub Actions compilation jobs passed in [run #2](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383). **This does not mean in-game testing has passed.**
+**Acceptance reported November 9, 2026:** The mod author confirmed that the Fabric, NeoForge and Forge 1.21.1 JARs all passed in-game testing. Fabric and NeoForge builds passed [CI run #2](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383); Forge passed [CI](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42697496779). This is author-reported acceptance; dedicated server and broader modpack coverage remain undocumented.
 
-## Test profiles (keep your working installation unchanged)
+## Regression checklist for future versions (keep your working installation unchanged)
 
 1. Create a clean Minecraft **1.21.1 Fabric** profile with Fabric Loader; put ONLY `better-brewing-fuels-fabric-1.21.1-1.1.0.jar` in its mods folder.
 2. Create a separate clean Minecraft **1.21.1 NeoForge 21.1.259+** profile; put ONLY `better-brewing-fuels-neoforge-1.21.1-1.1.0.jar` in its mods folder. Don't install both JARs together.
@@ -18,12 +18,12 @@ The Fabric and NeoForge GitHub Actions compilation jobs passed in [run #2](https
 
 ## How to download JARs
 
-From the [Fabric and NeoForge build](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42687956383) or the [Forge build](https://github.com/adamsilfven/better_brewing_fuels/actions/runs/42697205223), choose the matching artifact:
-- `better-brewing-fuels-fabric-1.21.1`
-- `better-brewing-fuels-neoforge-1.21.1`
-- `better-brewing-fuels-forge-1.21.1`
+Download the loader-specific JAR directly from [GitHub Releases v1.1.0](https://github.com/adamsilfven/better_brewing_fuels/releases/tag/v1.1.0):
+- `better-brewing-fuels-fabric-1.21.1-1.1.0.jar`
+- `better-brewing-fuels-neoforge-1.21.1-1.1.0.jar`
+- `better-brewing-fuels-forge-1.21.1-1.1.0.jar`
 
-Download and unzip each artifact, then use the lone JAR inside.
+These direct downloads do not require extracting an Actions artifact ZIP.
 
 ## Reporting a problem
 
@@ -31,4 +31,4 @@ Include: Minecraft version, loader/version, the relevant JAR filename,
 whether failure is during startup or brewing, `latest.log`, and reproduction
 steps. Avoid replacing an existing working pack's JAR until the new file is accepted.
 
-The Forge JAR is a compilation-tested **candidate**, not an accepted release. Test the same operations before publishing.
+All three loader builds are author-accepted for Minecraft 1.21.1; continue to test future versions and broader deployment scenarios independently.
