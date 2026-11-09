@@ -1,0 +1,107 @@
+name: Publish Minecraft 1.20.1 test candidates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-1.20.1-rc1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve successful Minecraft 1.20.1 CI artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact/{fabric,forge}
+          gh run download 42701571371 -R "$REPO" -n better-brewing-fuels-fabric-1.20.1-CANDIDATE -D artifact/fabric
+          gh run download 42701571371 -R "$REPO" -n better-brewing-fuels-forge-1.20.1-CANDIDATE -D artifact/forge
+      - name: Validate Minecraft, loader metadata, remapped Mixin references, and stage production JARs
+        shell: bash
+        run: |
+          set -euo pipefail
+          fabric=artifact/fabric/better-brewing-fuels-fabric-1.20.1-1.1.0.jar
+          forge=artifact/forge/better-brewing-fuels-forge-1.20.1-1.1.0-srg.jar
+          test -s "$fabric"
+          test -s "$forge"
+          test "$(find artifact/fabric -name '*.jar' | wc -l)" -eq 1
+          test "$(find artifact/forge -name '*.jar' | wc -l)" -eq 1
+          unzip -t "$fabric" >/dev/null
+          unzip -t "$forge" >/dev/null
+          unzip -Z1 "$fabric" | grep -Fxq 'fabric.mod.json'
+          unzip -Z1 "$fabric" | grep -Fxq 'brewing_fuel_expansion.1201.mixins.json'
+          unzip -Z1 "$fabric" | grep -Fxq 'better-brewing-fuels-fabric-1.20.1-refmap.json'
+          unzip -Z1 "$forge" | grep -Fxq 'META-INF/mods.toml'
+          unzip -Z1 "$forge" | grep -Fxq 'brewing_fuel_expansion.1201.mixins.json'
+          unzip -Z1 "$forge" | grep -Fxq 'brewing_fuel_expansion.1201.refmap.json'
+          unzip -p "$fabric" fabric.mod.json | grep -Fq '"minecraft": "1.20.1"'
+          unzip -p "$forge" META-INF/mods.toml | grep -Fq 'versionRange="[1.20.1,1.20.2)"'
+          unzip -p "$forge" META-INF/MANIFEST.MF | grep -Fq 'MixinConfigs: brewing_fuel_expansion.1201.mixins.json'
+          mkdir -p release-assets
+          cp "$fabric" release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar
+          # -srg is the remapped production Forge artifact. Rename only the file, not its contents.
+          cp "$forge" release-assets/better-brewing-fuels-forge-1.20.1-1.1.0.jar
+          (cd release-assets && sha256sum *.jar > SHA256SUMS.txt)
+          cat release-assets/SHA256SUMS.txt
+      - name: Prepare explicitly untested release notes
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## Better Brewing Fuels v1.1.0 for Minecraft 1.20.1 (release candidate 1)
+
+          **TEST CANDIDATES ONLY. Not yet verified in Minecraft gameplay.**
+          Both JARs passed actual Fabric / Forge Gradle compilation and archive checks, including the Forge SRG remap/reference map.
+
+          Choose one JAR for your **Minecraft 1.20.1** loader (Java 17):
+          - **Fabric:** `better-brewing-fuels-fabric-1.20.1-1.1.0.jar` (Fabric Loader)
+          - **Forge:** `better-brewing-fuels-forge-1.20.1-1.1.0.jar` (Forge 47.4.28)
+
+          **Do not combine loader variants or install these in Minecraft 1.21.1.**
+          Stable v1.1.0 for Minecraft 1.21.1 remains unchanged.
+
+          Expected fuel behavior: Charcoal = **4** operations, Soul Sand = **8**, Blaze Powder = **20** (vanilla).
+          Please test fuel input with **single-item stacks**, brewing operation counts, shift-click, hopper insertion,
+          saved fuel after restart, and dedicated server. See [the test checklist](https://github.com/adamsilfven/better_brewing_fuels/blob/main/TESTING.md).
+
+          SHA256SUMS.txt contains checksums of both exact candidate JARs.
+          EOF
+      - name: Create GitHub prerelease with direct JAR downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.0-mc1.20.1-rc1 -R "$REPO" >/dev/null 2>&1; then
+            echo "::error::Candidate release already exists; refusing to replace assets."
+            exit 1
+          fi
+          gh release create v1.1.0-mc1.20.1-rc1 \
+            release-assets/better-brewing-fuels-fabric-1.20.1-1.1.0.jar \
+            release-assets/better-brewing-fuels-forge-1.20.1-1.1.0.jar \
+            release-assets/SHA256SUMS.txt \
+            -R "$REPO" \
+            --target "$GITHUB_SHA" \
+            --title 'Better Brewing Fuels 1.20.1 (Fabric + Forge, RC1)' \
+            --notes-file release-notes.md --prerelease
+      - name: Verify published prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view v1.1.0-mc1.20.1-rc1 -R "$REPO" --json url,isPrerelease,assets \
+            --jq '{url: .url, isPrerelease: .isPrerelease, assets: [.assets[].name]}'
+          test "$(gh release view v1.1.0-mc1.20.1-rc1 -R "$REPO" --json isPrerelease --jq '.isPrerelease')" = true
+          test "$(gh release view v1.1.0-mc1.20.1-rc1 -R "$REPO" --json assets --jq '.assets | length')" -eq 3
