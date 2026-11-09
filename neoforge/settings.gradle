@@ -1,0 +1,4 @@
+pluginManagement {
+    repositories { gradlePluginPortal() }
+}
+rootProject.name = 'better-brewing-fuels-neoforge-1.21.1'
