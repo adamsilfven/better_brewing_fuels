@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.adamsilfven.brewingfuel.mixin1201",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": ["BrewingStand1201Mixin", "FuelSlot1201Mixin"],
+  "injectors": {"defaultRequire": 1}
+}
